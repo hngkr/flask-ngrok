@@ -43,7 +43,7 @@ def _run_ngrok(port):
     j = json.loads(tunnel_url)
 
     tunnel_url = j['tunnels'][0]['public_url']  # Do the parsing of the get
-    tunnel_url = tunnel_url.replace("https", "http")
+    tunnel_url = tunnel_url.replace("http://", "https://")  # Replace http with https
     return tunnel_url
 
 
