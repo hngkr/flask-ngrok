@@ -27,11 +27,14 @@ def _get_command():
 
 
 def _run_ngrok(port):
-    command = _get_command()
-    ngrok_path = str(Path(tempfile.gettempdir(), "ngrok"))
-    _download_ngrok(ngrok_path)
-    executable = str(Path(ngrok_path, command))
-    os.chmod(executable, 0o777)
+    executable = shutil.which("ngrok")
+    if executable is None:
+        command = _get_command()
+        ngrok_path = str(Path(tempfile.gettempdir(), "ngrok"))
+        _download_ngrok(ngrok_path)
+        executable = str(Path(ngrok_path, command))
+        os.chmod(executable, 0o777)
+
     ngrok = subprocess.Popen([executable, 'http', str(port)])
     atexit.register(ngrok.terminate)
     localhost_url = "http://localhost:4040/api/tunnels"  # Url with tunnel details
