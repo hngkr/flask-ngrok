@@ -38,12 +38,17 @@ def _run_ngrok(port):
     ngrok = subprocess.Popen([executable, 'http', str(port)])
     atexit.register(ngrok.terminate)
     localhost_url = "http://localhost:4040/api/tunnels"  # Url with tunnel details
-    time.sleep(1)
-    tunnel_url = requests.get(localhost_url).text  # Get the tunnel information
-    j = json.loads(tunnel_url)
 
-    tunnel_url = j['tunnels'][0]['public_url']  # Do the parsing of the get
-    tunnel_url = tunnel_url.replace("http://", "https://")  # Replace http with https
+    tunnel_url = None
+    while tunnel_url is None:
+        tunnel_url = requests.get(localhost_url).text  # Get the tunnel information
+        j = json.loads(tunnel_url)
+        https_tunnel_urls = [t.get('public_url') for t in j.get('tunnels', [{}]) if t.get('proto') == 'https']
+        if len(https_tunnel_urls) == 0:
+            time.sleep(1)
+        else:
+            tunnel_url = https_tunnel_urls
+
     return tunnel_url
 
 
