@@ -26,7 +26,26 @@ def _get_command():
     return command
 
 
+def _get_tunnel_url(localhost_url="http://localhost:4040/api/tunnels"):
+    tunnel_url = None
+    while tunnel_url is None:
+        try
+            tunnel_url_response = requests.get(localhost_url, timeout=1.0)  # Get the tunnel information
+        except requests.exceptions.Timeout:
+            return None
+
+        j = tunnel_url_response.json()
+        https_tunnel_urls = [t.get('public_url') for t in j.get('tunnels', [{}]) if t.get('proto') == 'https']
+        if len(https_tunnel_urls) == 0:
+            time.sleep(1)
+        else:
+            tunnel_url = https_tunnel_urls
+
+    return tunnel_url
+
+
 def _run_ngrok(port):
+    _get_tunnel_url()
     executable = shutil.which("ngrok")
     if executable is None:
         command = _get_command()
@@ -37,19 +56,8 @@ def _run_ngrok(port):
 
     ngrok = subprocess.Popen([executable, 'http', str(port)])
     atexit.register(ngrok.terminate)
-    localhost_url = "http://localhost:4040/api/tunnels"  # Url with tunnel details
 
-    tunnel_url = None
-    while tunnel_url is None:
-        tunnel_url = requests.get(localhost_url).text  # Get the tunnel information
-        j = json.loads(tunnel_url)
-        https_tunnel_urls = [t.get('public_url') for t in j.get('tunnels', [{}]) if t.get('proto') == 'https']
-        if len(https_tunnel_urls) == 0:
-            time.sleep(1)
-        else:
-            tunnel_url = https_tunnel_urls
-
-    return tunnel_url
+    return _get_tunnel_url()
 
 
 def _download_ngrok(ngrok_path):
